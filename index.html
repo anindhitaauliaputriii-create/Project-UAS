@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Informasi Perpustakaan</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Noto Sans', sans-serif; }
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 overflow-hidden h-screen">
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="notification-toast" class="fixed top-20 right-8 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 z-50 flex items-center space-x-2 hidden">
+    <i id="notification-icon" data-lucide="check-circle-2" class="w-5 h-5"></i>
+    <span id="notification-msg" class="font-medium"></span>
+  </div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen" class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+      <div class="bg-[#0F52BA] p-8 text-center">
+        <i data-lucide="book-marked" class="w-16 h-16 text-white mx-auto mb-4"></i>
+        <h1 class="text-2xl font-bold text-white">Sistem Informasi Perpustakaan</h1>
+        <p class="text-blue-200 mt-2"></p>
+      </div>
+      <form id="login-form" class="p-8 space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Induk Mahasiswa (NIM)</label>
+          <input
+            type="text"
+            id="login-nim"
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#0F52BA] focus:border-[#0F52BA] outline-none transition-all"
+            placeholder="Masukkan NIM Anda"
+            required
+          />
+        </div>
+        <button type="submit" class="w-full bg-[#0F52BA] hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex justify-center items-center">
+          Masuk Sistem
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APPLICATION LAYOUT -->
+  <div id="app-layout" class="flex h-screen bg-gray-50 overflow-hidden hidden">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-[#0F52BA] text-white flex flex-col shadow-xl z-20 flex-shrink-0">
+      <div class="p-6 border-b border-blue-800 flex items-center space-x-3">
+        <i data-lucide="book-marked" class="w-8 h-8 text-blue-200"></i>
+        <div>
+          <h1 class="text-xl font-bold tracking-wider">SI PERPUS</h1>
+          <p class="text-xs text-blue-200"></p>
+        </div>
+      </div>
+      <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+        <button onclick="switchMenu('dashboard')" id="menu-dashboard" class="sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="font-medium">Dashboard</span></button>
+        <button onclick="switchMenu('profil')" id="menu-profil" class="sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200"><i data-lucide="user" class="w-5 h-5"></i><span class="font-medium">Profil</span></button>
+        <button onclick="switchMenu('kategori')" id="menu-kategori" class="sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200"><i data-lucide="book-open" class="w-5 h-5"></i><span class="font-medium">Kategori Buku</span></button>
+        <button onclick="switchMenu('peminjaman')" id="menu-peminjaman" class="sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200"><i data-lucide="arrow-right-left" class="w-5 h-5"></i><span class="font-medium">Peminjaman</span></button>
+        <button onclick="switchMenu('pengembalian')" id="menu-pengembalian" class="sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200"><i data-lucide="rotate-ccw" class="w-5 h-5"></i><span class="font-medium">Pengembalian</span></button>
+      </nav>
+      <div class="p-4 border-t border-blue-800">
+        <button onclick="handleLogout()" class="flex items-center space-x-3 w-full p-3 rounded-lg hover:bg-blue-800 transition-colors text-red-200 hover:text-red-100">
+          <i data-lucide="log-out" class="w-5 h-5"></i><span class="font-medium">Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <!-- Header -->
+      <header class="h-16 bg-white shadow-sm flex items-center justify-between px-8 z-10">
+        <h2 id="current-menu-title" class="text-xl font-semibold text-gray-700 capitalize">Dashboard</h2>
+        <div class="flex items-center space-x-4">
+          <div class="text-right">
+            <p id="header-user-name" class="text-sm font-medium text-gray-800">-</p>
+            <p id="header-user-id" class="text-xs text-gray-500">-</p>
+          </div>
+          <div id="header-avatar-container" class="w-10 h-10 rounded-full bg-[#0F52BA] text-white flex items-center justify-center font-bold overflow-hidden">AA</div>
+        </div>
+      </header>
+
+      <!-- Scrollable Viewports -->
+      <div class="flex-1 overflow-y-auto p-8 bg-gray-50">
+        
+        <!-- DASHBOARD -->
+        <div id="view-dashboard" class="view-panel space-y-6 fade-in">
+          <div><h2 class="text-2xl font-bold text-gray-800">Ringkasan Aktivitas</h2><p class="text-gray-500 text-sm">Pantau peminjaman dan tanggungan Anda secara real-time.</p></div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-sm border-l-4 border-[#0F52BA] p-6">
+              <div class="flex justify-between items-start">
+                <div><p class="text-sm font-medium text-gray-500 mb-1">Peminjaman Aktif</p><h3 class="text-3xl font-bold text-gray-800"><span id="stat-active-borrows">0</span> <span class="text-base font-normal text-gray-500">Buku</span></h3></div>
+                <div class="p-3 bg-blue-50 text-[#0F52BA] rounded-lg"><i data-lucide="book-open" class="w-6 h-6"></i></div>
+              </div>
+            </div>
+            <div id="card-returns" class="bg-white rounded-xl shadow-sm border-l-4 border-green-500 p-6">
+              <div class="flex justify-between items-start">
+                <div><p class="text-sm font-medium text-gray-500 mb-1">Kotak Pengembalian</p><h3 class="text-3xl font-bold text-gray-800"><span id="stat-items-to-return">0</span> <span class="text-base font-normal text-gray-500">Perhatian</span></h3></div>
+                <div id="icon-container-returns" class="p-3 bg-green-50 text-green-600 rounded-lg"><i data-lucide="clock" class="w-6 h-6"></i></div>
+              </div>
+              <p id="warning-returns-text" class="text-xs text-orange-600 mt-3 flex items-center hidden"><i data-lucide="alert-circle" class="w-3.5 h-3.5 mr-1"></i> Segera kembalikan / perpanjang</p>
+            </div>
+            <div id="card-fines" class="bg-white rounded-xl shadow-sm border-l-4 border-green-500 p-6">
+              <div class="flex justify-between items-start">
+                <div><p class="text-sm font-medium text-gray-500 mb-1">Total Denda</p><h3 id="stat-total-fines" class="text-3xl font-bold text-green-600">Rp 0</h3></div>
+                <div id="icon-container-fines" class="p-3 bg-green-50 text-green-600 rounded-lg"><i data-lucide="credit-card" class="w-6 h-6"></i></div>
+              </div>
+              <p id="warning-fines-text" class="text-xs mt-3 flex items-center text-green-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 mr-1"></i> Tidak ada tunggakan denda</p>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-8">
+             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50"><h3 class="text-lg font-semibold text-gray-800">Daftar Peminjaman Saat Ini</h3></div>
+             <div class="overflow-x-auto">
+               <table class="w-full text-left border-collapse">
+                 <thead>
+                   <tr class="bg-white text-gray-500 text-sm border-b border-gray-100"><th class="py-3 px-6 font-medium">Buku</th><th class="py-3 px-6 font-medium">Tgl Pinjam</th><th class="py-3 px-6 font-medium">Batas Kembali</th><th class="py-3 px-6 font-medium">Status & Denda</th></tr>
+                 </thead>
+                 <tbody id="dashboard-borrow-table-body" class="text-sm"></tbody>
+               </table>
+             </div>
+          </div>
+        </div>
+
+        <!-- PROFIL -->
+        <div id="view-profil" class="view-panel space-y-6 fade-in hidden">
+          <button onclick="switchMenu('dashboard')" class="flex items-center text-sm text-gray-500 hover:text-[#0F52BA] mb-4"><i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Kembali</button>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden max-w-4xl mx-auto">
+            <div class="h-32 bg-gradient-to-r from-[#0F52BA] to-blue-400"></div>
+            <div class="px-8 pb-8">
+              <div class="flex flex-col items-center -mt-16 mb-8">
+                <div class="relative group cursor-pointer" onclick="triggerAvatarUpload()">
+                  <div id="profile-avatar-container" class="w-32 h-32 rounded-full border-4 border-white bg-[#0F52BA] text-white flex items-center justify-center text-4xl font-bold overflow-hidden shadow-lg">AA</div>
+                  <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="camera" class="text-white w-8 h-8"></i></div>
+                  <input type="file" id="avatar-file-input" onchange="handleAvatarFileChange(event)" accept="image/*" class="hidden" />
+                </div>
+                <h2 id="profile-display-name" class="mt-4 text-2xl font-bold text-gray-800">-</h2>
+                <p id="profile-display-nim-class" class="text-gray-500">-</p>
+                <span id="profile-display-id" class="mt-2 bg-blue-100 text-[#0F52BA] px-3 py-1 rounded-full text-xs font-semibold">ID: -</span>
+              </div>
+              <form id="profile-form" onsubmit="saveProfileData(event)" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mt-8">
+                <div class="col-span-1 md:col-span-2"><h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Edit Profil</h3></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label><input type="text" id="profile-input-nama" class="w-full px-4 py-2 rounded-lg border border-gray-200 outline-none" required /></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">NIM</label><input type="text" id="profile-input-nim" class="w-full px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 outline-none" readonly /></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label><input type="text" id="profile-input-kelas" class="w-full px-4 py-2 rounded-lg border border-gray-200 outline-none" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" id="profile-input-email" class="w-full px-4 py-2 rounded-lg border border-gray-200 outline-none" /></div>
+                <div><label class="block text-sm font-medium text-gray-700 mb-1">Nomor HP</label><input type="text" id="profile-input-nohp" class="w-full px-4 py-2 rounded-lg border border-gray-200 outline-none" /></div>
+                <div class="col-span-1 md:col-span-2 mt-4 flex justify-end">
+                  <button type="submit" class="bg-[#0F52BA] hover:bg-blue-800 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-sm">Simpan Perubahan</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- KATEGORI BUKU (Dengan Implementasi Sorting) -->
+        <div id="view-kategori" class="view-panel space-y-6 fade-in hidden">
+          <button onclick="switchMenu('dashboard')" class="flex items-center text-sm text-gray-500 hover:text-[#0F52BA] mb-4"><i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Kembali</button>
+          <div class="max-w-6xl mx-auto space-y-6">
+            
+            <!-- ALGORITHMS: Fitur Sorting Kategori -->
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+               <h3 class="font-bold text-gray-700 flex items-center"><i data-lucide="filter" class="w-5 h-5 mr-2 text-[#0F52BA]"></i> Filter & Pengurutan </h3>
+               <select id="sort-kategori-select" onchange="renderKategoriView()" class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-[#0F52BA] outline-none">
+                 <option value="default">Default (Berdasarkan ID)</option>
+                 <option value="judul">Urutkan: Judul (A-Z)</option>
+                 <option value="stok">Urutkan: Stok (Terkecil)</option>
+               </select>
+            </div>
+
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-[#0F52BA] pl-3">Kategori: Fiksi</h2>
+              <div id="fiksi-books-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-[#0F52BA] pl-3 mt-12">Kategori: Non-Fiksi</h2>
+              <div id="nonfiksi-books-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PEMINJAMAN (Dengan Implementasi Queue & Binary Search) -->
+        <div id="view-peminjaman" class="view-panel space-y-6 fade-in hidden">
+          <button onclick="switchMenu('dashboard')" class="flex items-center text-sm text-gray-500 hover:text-[#0F52BA] mb-4"><i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Kembali</button>
+          <div class="max-w-4xl mx-auto space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+              <div class="flex items-center space-x-4 mb-8 pb-6 border-b border-gray-100">
+                <div class="p-3 bg-blue-50 text-[#0F52BA] rounded-xl"><i data-lucide="arrow-right-left" class="w-8 h-8"></i></div>
+                <div><h2 class="text-2xl font-bold text-gray-800">Proses Peminjaman</h2><p class="text-gray-500"></p></div>
+              </div>
+              <form id="borrow-form" onsubmit="handleBorrowSubmission(event)" class="max-w-xl mx-auto space-y-6">
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex justify-between items-center">
+                   <span class="text-sm font-medium text-gray-600">ID Anggota Aktif:</span>
+                   <span id="active-borrow-member-id" class="font-bold text-[#0F52BA] bg-white px-3 py-1 rounded border border-blue-100">-</span>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian ID Buku</label>
+                  <div class="relative">
+                    <input type="text" id="borrow-book-id-input" placeholder="Contoh: F001" class="w-full pl-12 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#0F52BA] outline-none transition-all uppercase" required />
+                    <i data-lucide="search" class="absolute left-4 top-3.5 text-gray-400 w-5 h-5"></i>
+                  </div>
+                </div>
+                <button type="submit" id="borrow-submit-btn" class="w-full bg-[#0F52BA] hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex justify-center items-center">
+                  Tambah ke Antrean Peminjaman
+                </button>
+              </form>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-8">
+               <div class="px-6 py-4 border-b border-gray-100 bg-gray-50"><h3 class="text-lg font-semibold text-gray-800">Riwayat Transaksi Peminjaman</h3></div>
+               <div class="overflow-x-auto">
+                 <table class="w-full text-left border-collapse">
+                   <thead><tr class="bg-white text-gray-500 text-sm border-b border-gray-100"><th class="py-3 px-6 font-medium">Buku</th><th class="py-3 px-6 font-medium">Tgl Pinjam</th><th class="py-3 px-6 font-medium">Batas Kembali</th><th class="py-3 px-6 font-medium">Status</th></tr></thead>
+                   <tbody id="realtime-borrow-table-body" class="text-sm"></tbody>
+                 </table>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PENGEMBALIAN (Dengan Implementasi Stack) -->
+        <div id="view-pengembalian" class="view-panel space-y-6 fade-in hidden">
+          <button onclick="switchMenu('dashboard')" class="flex items-center text-sm text-gray-500 hover:text-[#0F52BA] mb-4"><i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Kembali</button>
+          <div class="max-w-5xl mx-auto space-y-8">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-800 mb-6">Manajemen Pengembalian</h2>
+              <div id="active-returns-list" class="grid grid-cols-1 gap-4"></div>
+            </div>
+            
+            <div class="mt-12">
+              <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center"><i data-lucide="layers" class="mr-2 text-[#0F52BA] w-5 h-5"></i> Riwayat Pengembalian </h3>
+              <div class="bg-gray-100 p-4 rounded-xl border border-gray-200">
+                 <div id="return-history-stack-container" class="flex flex-col gap-2 relative"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ================= LOGIC, ALGORITHMS & DATA STRUCTURES ================= -->
+  <script>
+    // -------------------------------------------------------------------------
+    // MATERI 1: ARRAY & OPERASI DASAR (Primary State Storage)
+    // Kompleksitas Ruang: O(n)
+    // -------------------------------------------------------------------------
+    const initialBooks = [
+      { id_buku: 'F001', judul: 'Bumi', kategori: 'Fiksi', isbn: '978-602-03-3295-6', stok: 5 },
+      { id_buku: 'F002', judul: 'Matahari', kategori: 'Fiksi', isbn: '978-602-03-3296-3', stok: 3 },
+      { id_buku: 'F003', judul: 'Selena', kategori: 'Fiksi', isbn: '978-602-03-3297-0', stok: 4 },
+      { id_buku: 'NF001', judul: 'Pengantar Teknologi Informasi', kategori: 'Non-Fiksi', isbn: '978-123-45-6789-0', stok: 10 },
+      { id_buku: 'NF002', judul: 'Belajar Bahasa Pemrograman Python', kategori: 'Non-Fiksi', isbn: '978-123-45-6789-1', stok: 7 },
+      { id_buku: 'NF003', judul: 'Logika dan Algoritma untuk Pemula', kategori: 'Non-Fiksi', isbn: '978-123-45-6789-2', stok: 8 },
+    ];
+
+    let currentUser = null;
+    let books = [...initialBooks];
+    let borrows = [];
+    let rawReturnHistory = []; // Data mentah untuk diubah menjadi Stack
+    let currentSimulatedDate = new Date();
+
+
+    // -------------------------------------------------------------------------
+    // MATERI 2: STACK (Tumpukan - LIFO: Last In First Out)
+    // Kompleksitas Push/Pop: Direpresentasikan O(n) karena visual unshift array JS, 
+    // namun secara konsep Stack murni adalah O(1).
+    // -------------------------------------------------------------------------
+    class ReturnStack {
+      constructor(itemsArray) {
+        this.items = itemsArray;
+      }
+      // Menumpuk elemen baru di posisi paling atas (index 0)
+      push(record) { this.items.unshift(record); }
+      getStack() { return this.items; }
+    }
+
+
+    // -------------------------------------------------------------------------
+    // MATERI 3: QUEUE (Antrean - FIFO: First In First Out)
+    // Kompleksitas Enqueue O(1), Dequeue O(n) (Shift Array JS)
+    // -------------------------------------------------------------------------
+    class BorrowQueue {
+      constructor() { this.items = []; }
+      enqueue(transaction) { this.items.push(transaction); }
+      dequeue() { return this.items.shift(); }
+      isEmpty() { return this.items.length === 0; }
+    }
+    const processQueue = new BorrowQueue();
+
+
+    // -------------------------------------------------------------------------
+    // MATERI 4: HASHING (Hash Map)
+    // Digunakan untuk lookup / pencarian data seketika (O(1)) tanpa looping
+    // -------------------------------------------------------------------------
+    const bookHashMap = new Map();
+    function syncBookHashMap() {
+      bookHashMap.clear();
+      // Pemetaan ID Buku (Key) ke Objek Buku (Value)
+      books.forEach(b => bookHashMap.set(b.id_buku.toUpperCase(), b));
+    }
+
+
+    // -------------------------------------------------------------------------
+    // MATERI 5: SORTING ALGORITHMS (Selection Sort)
+    // Kompleksitas Waktu: O(n^2), Ruang: O(1)
+    // -------------------------------------------------------------------------
+    function selectionSortBooks(arr, key) {
+      let sorted = [...arr]; // Copy array agar tidak memutasi master data
+      let n = sorted.length;
+      
+      for (let i = 0; i < n - 1; i++) {
+        let minIdx = i;
+        for (let j = i + 1; j < n; j++) {
+          if (key === 'judul') {
+             // String comparison
+             if (sorted[j].judul.localeCompare(sorted[minIdx].judul) < 0) minIdx = j;
+          } else if (key === 'stok') {
+             // Number comparison
+             if (sorted[j].stok < sorted[minIdx].stok) minIdx = j;
+          }
+        }
+        // Lakukan Swap
+        if (minIdx !== i) {
+          let temp = sorted[i];
+          sorted[i] = sorted[minIdx];
+          sorted[minIdx] = temp;
+        }
+      }
+      return sorted;
+    }
+
+
+    // -------------------------------------------------------------------------
+    // MATERI 6: SEARCHING ALGORITHMS (Binary Search)
+    // Kompleksitas Waktu: O(log n). Membutuhkan data yang sudah terurut.
+    // -------------------------------------------------------------------------
+    function binarySearchBookById(targetId) {
+      // 1. Array harus di-sort dahulu (O(n log n)) agar binary search berfungsi
+      let sortedData = [...books].sort((a,b) => a.id_buku.localeCompare(b.id_buku));
+      
+      let left = 0;
+      let right = sortedData.length - 1;
+      let target = targetId.toUpperCase();
+
+      // 2. Proses pembagian area pencarian (O(log n))
+      while (left <= right) {
+        let mid = Math.floor((left + right) / 2);
+        let midId = sortedData[mid].id_buku.toUpperCase();
+        
+        if (midId === target) return sortedData[mid]; // Ditemukan
+        if (midId < target) left = mid + 1; // Cari di kanan
+        else right = mid - 1; // Cari di kiri
+      }
+      return null; // Tidak ditemukan
+    }
+
+    // --- INISIALISASI APLIKASI ---
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem('library_current_user');
+      const savedBooks = localStorage.getItem('library_books');
+      const savedBorrows = localStorage.getItem('library_borrows');
+      const savedHistory = localStorage.getItem('library_return_history');
+
+      if (savedBooks) books = JSON.parse(savedBooks);
+      if (savedBorrows) borrows = JSON.parse(savedBorrows);
+      if (savedHistory) rawReturnHistory = JSON.parse(savedHistory);
+
+      syncBookHashMap(); // Sinkronisasi Hash Map saat data siap
+
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        completeLogin();
+      } else {
+        showLoginScreen();
+      }
+      lucide.createIcons();
+    });
+
+    // --- HELPERS UMUM ---
+    function formatDate(dateString) { return new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }); }
+    function formatRupiah(number) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number); }
+    function showNotification(msg, type = 'success') {
+      const toast = document.getElementById('notification-toast');
+      document.getElementById('notification-msg').textContent = msg;
+      toast.className = `fixed top-20 right-8 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 z-50 flex items-center space-x-2 ${type === 'success' ? 'bg-green-100 text-green-800 border-l-4 border-green-500' : 'bg-red-100 text-red-800 border-l-4 border-red-500'}`;
+      document.getElementById('notification-icon').setAttribute('data-lucide', type === 'success' ? 'check-circle-2' : 'alert-circle');
+      lucide.createIcons();
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+    function saveStateToLocalStorage() {
+      localStorage.setItem('library_current_user', JSON.stringify(currentUser));
+      if (currentUser && currentUser.nim) localStorage.setItem(`library_profile_${currentUser.nim}`, JSON.stringify(currentUser));
+      localStorage.setItem('library_books', JSON.stringify(books));
+      localStorage.setItem('library_borrows', JSON.stringify(borrows));
+      localStorage.setItem('library_return_history', JSON.stringify(rawReturnHistory));
+      syncBookHashMap(); // Update hashmap tiap data berubah
+    }
+
+    // --- ALUR LOGIN ---
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nimInput = document.getElementById('login-nim').value.trim();
+      if (!nimInput) return;
+
+      const savedProfile = localStorage.getItem(`library_profile_${nimInput}`);
+      if (savedProfile) {
+        currentUser = JSON.parse(savedProfile);
+      } else if (nimInput === '255520008') {
+        currentUser = { nama: 'Anindhita Aulia Putri', nim: '255520008', kelas: '2 TI-A', email: 'anindhitaputri@gmail.com', nohp: '081227162383', avatar: null, id_anggota: 'ANG-2025-001' };
+      } else {
+        currentUser = { nama: 'Mahasiswa Baru', nim: nimInput, kelas: '-', email: '-', nohp: '-', avatar: null, id_anggota: `ANG-${nimInput}` };
+      }
+
+      if (nimInput === '255520008') {
+        const existingBorrows = localStorage.getItem('library_borrows');
+        if (!existingBorrows || JSON.parse(existingBorrows).length === 0) {
+          const pD = new Date(); pD.setDate(pD.getDate() - 10);
+          const pD2 = new Date(); pD2.setDate(pD2.getDate() - 3);
+          const aD = new Date(); const aD2 = new Date(); aD2.setDate(aD2.getDate() + 2);
+          borrows = [
+            { id: 'TRX-001', id_anggota: 'ANG-2025-001', bookId: 'F001', judul: 'Bumi', tglPinjam: pD.toISOString(), tglKembali: pD2.toISOString(), status: 'Dipinjam', dendaDibayar: false },
+            { id: 'TRX-002', id_anggota: 'ANG-2025-001', bookId: 'NF002', judul: 'Belajar Bahasa Pemrograman Python', tglPinjam: aD.toISOString(), tglKembali: aD2.toISOString(), status: 'Dipinjam', dendaDibayar: false }
+          ];
+        }
+      }
+      completeLogin(); showNotification('Berhasil masuk sistem!');
+    });
+
+    function completeLogin() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('app-layout').classList.remove('hidden');
+      document.getElementById('header-user-name').textContent = currentUser.nama;
+      document.getElementById('header-user-id').textContent = currentUser.id_anggota;
+      updateAvatarUI(); saveStateToLocalStorage(); switchMenu('dashboard');
+    }
+
+    function showLoginScreen() {
+      document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('app-layout').classList.add('hidden'); document.getElementById('login-nim').value = '';
+    }
+    function handleLogout() { currentUser = null; localStorage.removeItem('library_current_user'); showLoginScreen(); }
+
+    function updateAvatarUI() {
+      const hA = document.getElementById('header-avatar-container'); const pA = document.getElementById('profile-avatar-container');
+      const ini = currentUser.nama ? currentUser.nama.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : 'AA';
+      const htm = currentUser.avatar ? `<img src="${currentUser.avatar}" alt="A" class="w-full h-full object-cover" />` : ini;
+      if(hA) hA.innerHTML = htm; if(pA) pA.innerHTML = htm;
+    }
+
+    // Algoritma Komputasi Denda
+    function getBorrowStatus(tglKembali, status) {
+      if (status === 'Dikembalikan') return { statusText: 'Dikembalikan', fine: 0, isLate: false, daysLeft: 0 };
+      const dueDate = new Date(tglKembali); const today = new Date(currentSimulatedDate);
+      dueDate.setHours(0,0,0,0); today.setHours(0,0,0,0);
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) return { statusText: 'Terlambat', fine: Math.abs(diffDays) * 2000, isLate: true, daysLeft: diffDays };
+      return { statusText: 'Aktif', fine: 0, isLate: false, daysLeft: diffDays };
+    }
+
+    function switchMenu(menuId) {
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.sidebar-btn').forEach(b => b.className = "sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200 text-blue-100 hover:bg-blue-800 hover:text-white");
+      document.getElementById(`view-${menuId}`).classList.remove('hidden');
+      document.getElementById(`menu-${menuId}`).className = "sidebar-btn flex items-center space-x-3 w-full p-3 rounded-lg transition-all duration-200 bg-white text-[#0F52BA] shadow-md";
+      document.getElementById('current-menu-title').textContent = menuId.replace('-', ' ');
+      
+      if (menuId === 'dashboard') renderDashboardView();
+      if (menuId === 'profil') renderProfileView();
+      if (menuId === 'kategori') renderKategoriView();
+      if (menuId === 'peminjaman') renderPeminjamanView();
+      if (menuId === 'pengembalian') renderPengembalianView();
+      lucide.createIcons();
+    }
+
+    // --- MENU 1: DASHBOARD ---
+    function renderDashboardView() {
+      const activeBorrows = borrows.filter(b => b.status === 'Dipinjam');
+      document.getElementById('stat-active-borrows').textContent = activeBorrows.length;
+      let totalFines = 0, itemsToReturn = 0;
+      activeBorrows.forEach(borrow => {
+        const s = getBorrowStatus(borrow.tglKembali, borrow.status);
+        if (!borrow.dendaDibayar) totalFines += s.fine;
+        if (s.daysLeft <= 3) itemsToReturn++;
+      });
+      document.getElementById('stat-items-to-return').textContent = itemsToReturn;
+      document.getElementById('card-returns').className = `bg-white rounded-xl shadow-sm border-l-4 p-6 ${itemsToReturn > 0 ? 'border-orange-500' : 'border-green-500'}`;
+      document.getElementById('icon-container-returns').className = `p-3 rounded-lg ${itemsToReturn > 0 ? 'bg-orange-50 text-orange-600' : 'bg-green-50 text-green-600'}`;
+      document.getElementById('warning-returns-text').style.display = itemsToReturn > 0 ? 'flex' : 'none';
+      
+      document.getElementById('stat-total-fines').textContent = formatRupiah(totalFines);
+      document.getElementById('stat-total-fines').className = `text-3xl font-bold ${totalFines > 0 ? 'text-red-600' : 'text-green-600'}`;
+      document.getElementById('card-fines').className = `bg-white rounded-xl shadow-sm border-l-4 p-6 ${totalFines > 0 ? 'border-red-500' : 'border-green-500'}`;
+      document.getElementById('icon-container-fines').className = `p-3 rounded-lg ${totalFines > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`;
+
+      const tBody = document.getElementById('dashboard-borrow-table-body');
+      tBody.innerHTML = '';
+      if (activeBorrows.length === 0) tBody.innerHTML = `<tr><td colSpan="4" class="py-8 text-center text-gray-400">Belum ada buku dipinjam.</td></tr>`;
+      else {
+        activeBorrows.forEach(borrow => {
+          const s = getBorrowStatus(borrow.tglKembali, borrow.status);
+          const bC = s.isLate ? 'bg-red-100 text-red-800' : (s.daysLeft <= 2 ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800');
+          // Demonstrasi Hashing: Ambil detail judul dari Hash Map O(1)
+          const bookDetails = bookHashMap.get(borrow.bookId.toUpperCase()); 
+          const judulValid = bookDetails ? bookDetails.judul : borrow.judul;
+          
+          tBody.insertAdjacentHTML('beforeend', `
+            <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+              <td class="py-3 px-6 font-medium text-gray-800">${judulValid}</td>
+              <td class="py-3 px-6 text-gray-600">${formatDate(borrow.tglPinjam)}</td>
+              <td class="py-3 px-6 text-gray-600">${formatDate(borrow.tglKembali)}</td>
+              <td class="py-3 px-6">
+                 <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${bC}">${s.isLate ? 'Terlambat' : `Aman (Sisa ${s.daysLeft} hari)`}</span>
+                 ${(s.fine > 0 && !borrow.dendaDibayar) ? `<span class="block text-xs text-red-600 font-semibold mt-1">+ ${formatRupiah(s.fine)}</span>` : ''}
+              </td>
+            </tr>
+          `);
+        });
+      }
+    }
+
+    // --- MENU 2: PROFIL ---
+    function renderProfileView() {
+      document.getElementById('profile-display-name').textContent = currentUser.nama; document.getElementById('profile-display-nim-class').textContent = `${currentUser.nim} • ${currentUser.kelas}`; document.getElementById('profile-display-id').textContent = `ID: ${currentUser.id_anggota}`;
+      ['nama','nim','kelas','email','nohp'].forEach(k => document.getElementById(`profile-input-${k}`).value = currentUser[k]); updateAvatarUI();
+    }
+    function triggerAvatarUpload() { document.getElementById('avatar-file-input').click(); }
+    function handleAvatarFileChange(e) {
+      if (e.target.files[0]) {
+        const r = new FileReader(); r.onloadend = () => { currentUser.avatar = r.result; updateAvatarUI(); saveStateToLocalStorage(); showNotification('Foto profil diunggah'); }; r.readAsDataURL(e.target.files[0]);
+      }
+    }
+    function saveProfileData(e) {
+      e.preventDefault(); ['nama','kelas','email','nohp'].forEach(k => currentUser[k] = document.getElementById(`profile-input-${k}`).value.trim());
+      saveStateToLocalStorage(); renderProfileView(); document.getElementById('header-user-name').textContent = currentUser.nama; showNotification('Profil diperbarui');
+    }
+
+    // --- MENU 3: KATEGORI (Menerapkan Selection Sort) ---
+    function renderKategoriView() {
+      const fC = document.getElementById('fiksi-books-container'); const nfC = document.getElementById('nonfiksi-books-container');
+      fC.innerHTML = ''; nfC.innerHTML = '';
+
+      // Terapkan Sorting (Selection Sort - O(n^2)) jika dropdown diubah
+      const sortVal = document.getElementById('sort-kategori-select').value;
+      let displayBooks = [...books];
+      if (sortVal !== 'default') {
+         displayBooks = selectionSortBooks(displayBooks, sortVal);
+      }
+
+      displayBooks.forEach(book => {
+        const htm = `
+          <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+            <div class="flex justify-between items-start mb-4"><div class="bg-blue-50 text-[#0F52BA] p-2 rounded-lg"><i data-lucide="book-open" class="w-5 h-5"></i></div><span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">ID: ${book.id_buku}</span></div>
+            <h4 class="font-bold text-gray-800 text-lg mb-1">${book.judul}</h4><p class="text-xs text-gray-500 mb-4 font-mono">ISBN: ${book.isbn}</p>
+            <div class="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center"><span class="text-sm text-gray-600">Stok Tersedia:</span><span class="font-bold ${book.stok > 0 ? 'text-green-600' : 'text-red-600'}">${book.stok}</span></div>
+          </div>
+        `;
+        book.kategori === 'Fiksi' ? fC.insertAdjacentHTML('beforeend', htm) : nfC.insertAdjacentHTML('beforeend', htm);
+      });
+      lucide.createIcons();
+    }
+
+    // --- MENU 4: PEMINJAMAN (Menerapkan Queue & Binary Search) ---
+    function renderPeminjamanView() {
+      document.getElementById('active-borrow-member-id').textContent = currentUser.id_anggota; document.getElementById('borrow-book-id-input').value = '';
+      const tB = document.getElementById('realtime-borrow-table-body'); tB.innerHTML = '';
+      if (borrows.length === 0) tB.innerHTML = `<tr><td colSpan="5" class="py-8 text-center text-gray-400">Belum ada transaksi peminjaman.</td></tr>`;
+      else borrows.forEach(b => tB.insertAdjacentHTML('beforeend', `<tr class="border-b border-gray-50"><td class="py-3 px-6 text-gray-600 font-mono text-xs">${b.id_anggota}</td><td class="py-3 px-6 font-medium">${b.judul}</td><td class="py-3 px-6 text-gray-600">${formatDate(b.tglPinjam)}</td><td class="py-3 px-6 text-gray-600">${formatDate(b.tglKembali)}</td><td class="py-3 px-6"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${b.status === 'Dipinjam' ? 'bg-blue-100 text-[#0F52BA]' : 'bg-gray-100 text-gray-600'}">${b.status}</span></td></tr>`));
+    }
+
+    function handleBorrowSubmission(e) {
+      e.preventDefault();
+      const inputId = document.getElementById('borrow-book-id-input').value.trim().toUpperCase();
+      if (!inputId) return;
+
+      const submitBtn = document.getElementById('borrow-submit-btn');
+      submitBtn.disabled = true;
+      
+      // IMPLEMENTASI MATERI: Masukkan id ke Queue (Antrean)
+      processQueue.enqueue(inputId);
+      submitBtn.textContent = "Memproses Antrean (Queue)...";
+
+      setTimeout(() => {
+        // Ambil dari Queue (FIFO)
+        const targetId = processQueue.dequeue();
+
+        // IMPLEMENTASI MATERI: Binary Search O(log n)
+        const bookFound = binarySearchBookById(targetId);
+
+        if (!bookFound) {
+          showNotification('Pencarian O(log n): Buku tidak ditemukan', 'error');
+          submitBtn.disabled = false; submitBtn.textContent = "Proses Pinjam"; return;
+        }
+        if (bookFound.stok <= 0) {
+          showNotification('Maaf, stok buku sedang kosong', 'error');
+          submitBtn.disabled = false; submitBtn.textContent = "Proses Pinjam"; return;
+        }
+
+        const isBorrowed = borrows.find(b => b.bookId === bookFound.id_buku && b.status === 'Dipinjam');
+        if (isBorrowed) {
+          showNotification('Anda sedang meminjam buku ini', 'error');
+          submitBtn.disabled = false; submitBtn.textContent = "Proses Pinjam"; return;
+        }
+
+        const tP = new Date(); const tK = new Date(); tK.setDate(tK.getDate() + 7);
+        borrows.unshift({ id: `TRX-${Date.now()}`, id_anggota: currentUser.id_anggota, bookId: bookFound.id_buku, judul: bookFound.judul, tglPinjam: tP.toISOString(), tglKembali: tK.toISOString(), status: 'Dipinjam', dendaDibayar: false });
+        
+        // Update Stok 
+        const bIdx = books.findIndex(b => b.id_buku === bookFound.id_buku);
+        books[bIdx].stok -= 1;
+
+        saveStateToLocalStorage(); renderPeminjamanView();
+        showNotification('Berhasil! Buku berhasil dipinjam');
+        submitBtn.disabled = false; submitBtn.textContent = "Proses Pinjam";
+      }, 1000);
+    }
+
+    // --- MENU 5: PENGEMBALIAN (Menerapkan Stack) ---
+    function renderPengembalianView() {
+      const aL = document.getElementById('active-returns-list'); aL.innerHTML = '';
+      const actB = borrows.filter(b => b.status === 'Dipinjam');
+      if (actB.length === 0) aL.innerHTML = `<div class="bg-white p-8 rounded-xl border border-gray-100 text-center text-gray-500">Tidak ada buku yang perlu dikembalikan.</div>`;
+      else {
+        actB.forEach(borrow => {
+          const s = getBorrowStatus(borrow.tglKembali, borrow.status);
+          const cannotRet = s.fine > 0 && !borrow.dendaDibayar;
+          aL.insertAdjacentHTML('beforeend', `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div class="flex-1 w-full md:w-auto">
+                <h3 class="font-bold text-lg text-gray-800">${borrow.judul}</h3>
+                <div class="text-sm text-gray-500 mt-1 flex gap-4"><span>Pinjam: ${formatDate(borrow.tglPinjam)}</span><span>Batas: ${formatDate(borrow.tglKembali)}</span></div>
+                <div class="mt-3">
+                  ${s.isLate ? `<div class="flex flex-col"><span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold w-max flex"><i data-lucide="alert-circle" class="w-3.5 h-3.5 mr-1"></i> Terlewat ${Math.abs(s.daysLeft)} Hari</span>${s.fine > 0 ? `<span class="mt-2 text-sm font-bold ${borrow.dendaDibayar?'text-green-600':'text-red-600'}">Denda: ${formatRupiah(s.fine)} ${borrow.dendaDibayar?'(LUNAS)':''}</span>`:''}</div>` : `<span class="px-3 py-1 rounded-full text-xs font-bold w-max flex ${s.daysLeft<=2?'bg-orange-100 text-orange-800':'bg-green-100 text-green-800'}"><i data-lucide="clock" class="w-3.5 h-3.5 mr-1"></i> Sisa ${s.daysLeft} Hari</span>`}
+                </div>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-3">
+                ${(s.isLate && s.fine > 0 && !borrow.dendaDibayar) ? `<button onclick="handlePayFine('${borrow.id}')" class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium">Bayar Denda</button>`:''}
+                ${(!s.isLate && s.daysLeft >= 1) ? `<button onclick="handleExtend('${borrow.id}')" class="bg-white text-[#0F52BA] border border-[#0F52BA] px-4 py-2 rounded-lg text-sm font-medium">Perpanjang</button>`:''}
+                <button onclick="handleReturn('${borrow.id}')" ${cannotRet?'disabled':''} class="px-6 py-2 rounded-lg text-sm font-bold shadow-sm ${cannotRet?'bg-gray-300 text-gray-500':'bg-[#0F52BA] text-white'}">Kembalikan</button>
+              </div>
+            </div>
+          `);
+        });
+      }
+
+      // Render Riwayat Menggunakan Data Stack (LIFO)
+      const sC = document.getElementById('return-history-stack-container'); sC.innerHTML = '';
+      
+      // Inisialisasi Stack
+      const historyStackInstance = new ReturnStack(rawReturnHistory);
+      const currentStack = historyStackInstance.getStack();
+
+      if (currentStack.length === 0) sC.innerHTML = `<p class="text-center text-gray-500 py-4 text-sm font-mono">Stack Kosong.</p>`;
+      else {
+        sC.insertAdjacentHTML('beforeend', `<div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-300 z-0 hidden md:block"></div>`);
+        currentStack.forEach((record, index) => {
+          sC.insertAdjacentHTML('beforeend', `
+            <div class="bg-white border-l-4 border-[#0F52BA] p-4 rounded shadow-sm relative z-10 ml-0 md:ml-12 flex justify-between items-center transform transition-all hover:-translate-y-1">
+              <div class="absolute -left-12 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#0F52BA] text-white rounded-full flex items-center justify-center font-bold text-xs hidden md:flex">${index === 0 ? 'Top' : `-${index}`}</div>
+              <div><h4 class="font-bold text-gray-800">${record.judul}</h4><p class="text-xs text-gray-500">Dikembalikan: ${formatDate(record.tglDikembalikanReal)}</p></div>
+              <div class="text-xs font-mono bg-green-100 text-green-800 px-2 py-1 rounded">Selesai</div>
+            </div>
+          `);
+        });
+      }
+      lucide.createIcons();
+    }
+
+    function handleExtend(borrowId) {
+      const idx = borrows.findIndex(b => b.id === borrowId); if (idx === -1) return;
+      const s = getBorrowStatus(borrows[idx].tglKembali, borrows[idx].status);
+      if (s.daysLeft < 1) return showNotification('Gagal: Minimal perpanjang 1 hari sebelum', 'error');
+      const nD = new Date(borrows[idx].tglKembali); nD.setDate(nD.getDate() + 3);
+      borrows[idx].tglKembali = nD.toISOString();
+      saveStateToLocalStorage(); renderPengembalianView(); showNotification('Diperpanjang 3 hari');
+    }
+    function handlePayFine(borrowId) {
+      const idx = borrows.findIndex(b => b.id === borrowId); if (idx === -1) return;
+      borrows[idx].dendaDibayar = true; saveStateToLocalStorage(); renderPengembalianView(); showNotification('Denda LUNAS');
+    }
+    function handleReturn(borrowId) {
+      const bIdx = borrows.findIndex(b => b.id === borrowId); if (bIdx === -1) return;
+      const b = borrows[bIdx]; const s = getBorrowStatus(b.tglKembali, b.status);
+      if (s.fine > 0 && !b.dendaDibayar) return showNotification('Lunasi denda dahulu', 'error');
+      
+      const bookIdx = books.findIndex(bk => bk.id_buku === b.bookId);
+      if (bookIdx !== -1) books[bookIdx].stok += 1;
+      
+      borrows[bIdx].status = 'Dikembalikan';
+      
+      // IMPLEMENTASI MATERI: PUSH KE STACK (O(1))
+      const historyStackInstance = new ReturnStack(rawReturnHistory);
+      historyStackInstance.push({ ...b, tglDikembalikanReal: new Date().toISOString() });
+      rawReturnHistory = historyStackInstance.getStack(); // Update reference
+
+      saveStateToLocalStorage(); renderPengembalianView(); showNotification('Buku dikembalikan');
+    }
+  </script>
+</body>
+</html>
